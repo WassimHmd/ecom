@@ -21,6 +21,16 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+  bidPlaced : {
+    type: Boolean,
+    required: true,
+    default: false
+  },
+  auction: {
+    type: Boolean,
+    required: true,
+    default: false
+  }
 });
 
 const Product = mongoose.model("product", productSchema);

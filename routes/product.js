@@ -8,12 +8,14 @@ const {
   update,
   remove,
 } = require("../controllers/products");
-const { purchase } = require("../controllers/purchase");
+const { purchase, bid, sell } = require("../controllers/purchase");
 
 router.get("/", list);
 router.get("/:id", read);
 router.post("/", create);
 router.post("/purchase", purchase);
+router.post("/bid", bid)
+router.post("/sell", sell)
 router.put("/:id", update);
 router.delete("/:id", remove);
 
