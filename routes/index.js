@@ -3,5 +3,6 @@ var router = express.Router();
 
 /* GET home page. */
 router.use("/products", require("./product"));
+router.use("/auth/", require("./auth"))
 
 module.exports = router;
