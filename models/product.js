@@ -30,6 +30,10 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     required: true,
     default: false
+  },
+  info: {
+    type: Object,
+    default: {}
   }
 });
 
