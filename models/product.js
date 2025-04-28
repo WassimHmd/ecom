@@ -17,24 +17,24 @@ const productSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  image: {
-    type: String,
+  images: {
+    type: [String],
     required: false,
   },
-  bids : {
+  bids: {
     type: Number,
     required: true,
-    default: 0
+    default: 0,
   },
   auction: {
     type: Boolean,
     required: true,
-    default: false
+    default: false,
   },
   info: {
     type: Object,
-    default: {}
-  }
+    default: {},
+  },
 });
 
 const Product = mongoose.model("product", productSchema);
