@@ -5,13 +5,13 @@ const stripe = require("stripe")(
 
 exports.purchase = async (req, res) => {
   try {
-    const { productIds } = req.body;
+    const { order } = req.body;
 
-    if (!Array.isArray(productIds) || productIds.length === 0) {
+    if (!Array.isArray(order) || order.length === 0) {
       return res.status(400).send({ message: "No products provided" });
     }
 
-    const products = await Product.find({ _id: { $in: productIds } });
+    const products = await Product.find({ _id: { $in: order.map(prod=>prod.id) } });
 
     for(let product of products) {
       if(product.auction){
@@ -19,7 +19,7 @@ exports.purchase = async (req, res) => {
       }
     }
 
-    if (products.length !== productIds.length) {
+    if (products.length !== order.length) {
       return res
         .status(404)
         .send({ message: "One or more products not found" });
@@ -32,9 +32,11 @@ exports.purchase = async (req, res) => {
           .status(400)
           .send({ message: `${product.name || product._id} is out of stock` });
       }
-      totalAmountInCents += Math.round(product.price * 100); // Sum prices in cents
+      // console.log(product._id)
+      // console.log("product:", order.find((elem)=> elem.id==product._id));
+      totalAmountInCents += Math.round(product.price * 100*order.find((elem)=> elem.id==product._id).quantity); // Sum prices in cents
     }
-
+    console.log("total:", totalAmountInCents);
     const testPaymentMethod = "pm_card_visa";
 
     const paymentIntent = await stripe.paymentIntents.create({
