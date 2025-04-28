@@ -1,3 +1,4 @@
+const Order = require("../models/order");
 const Product = require("../models/product");
 const stripe = require("stripe")(
   "sk_test_51Qz6p2JIXPaahj1jaRih1JczdYwE19Ox6CrGlnjra4O6QM6olV6r2rXcHNsMb4kWE8D92bUVusErhizktkfxkRjF005k7AEKeh"
@@ -51,6 +52,11 @@ exports.purchase = async (req, res) => {
         product.quantity -= 1;
         await product.save();
       }
+      Order.create({
+        products: products.map((p) => p._id),
+        totalPrice: totalAmountInCents / 100,
+        date: new Date(),
+      })
       res.send({
         message: "Purchase successful",
         paymentIntentId: paymentIntent.id,
@@ -61,6 +67,7 @@ exports.purchase = async (req, res) => {
         })),
       });
     } else {
+      console.log()
       res
         .status(400)
         .send({ message: "Payment failed", status: paymentIntent.status });
