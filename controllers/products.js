@@ -3,7 +3,15 @@ const Product = require("../models/product");
 // CREATE
 exports.create = async (req, res) => {
   try {
-    const product = new Product({...req.body, image: "http://localhost:5000"+req.images.image[0].path});
+
+    images = req.images.image.map((image) => {
+      return "http://localhost:5000" + image.path;
+    })
+    const product = new Product({
+      ...req.body,
+      info: JSON.parse(req.body.info),
+      images
+    });
     const result = await product.save();
     res.send(result);
   } catch (err) {
