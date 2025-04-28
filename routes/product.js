@@ -9,10 +9,11 @@ const {
   remove,
 } = require("../controllers/products");
 const { purchase, bid, sell } = require("../controllers/purchase");
+const { dynamicImageUpload } = require("../middlewares/imageUpload");
 
 router.get("/", list);
 router.get("/:id", read);
-router.post("/", create);
+router.post("/", dynamicImageUpload, create);
 router.post("/purchase", purchase);
 router.post("/bid", bid)
 router.post("/sell", sell)

@@ -3,7 +3,7 @@ const Product = require("../models/product");
 // CREATE
 exports.create = async (req, res) => {
   try {
-    const product = new Product(req.body);
+    const product = new Product({...req.body, image: "http://localhost:5000"+req.images.image[0].path});
     const result = await product.save();
     res.send(result);
   } catch (err) {

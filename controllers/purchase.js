@@ -85,7 +85,7 @@ exports.bid = async (req, res) => {
     }
 
     product.price = price
-    product.bidPlaced = true
+    product.bids = product.bids + 1
     product.save()
     return res.status(200).json({ message: "Bid placed successfully" });
 

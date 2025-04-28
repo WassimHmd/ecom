@@ -21,10 +21,10 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
-  bidPlaced : {
-    type: Boolean,
+  bids : {
+    type: Number,
     required: true,
-    default: false
+    default: 0
   },
   auction: {
     type: Boolean,

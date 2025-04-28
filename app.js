@@ -21,6 +21,7 @@ const cors = require("cors");
 app.use(cors({ origin: "*" }));
 
 app.use("/", indexRouter);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 connectDatabase().then(() => {
   console.log("Database connected");
