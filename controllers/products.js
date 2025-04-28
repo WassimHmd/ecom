@@ -9,7 +9,7 @@ exports.create = async (req, res) => {
     })
     const product = new Product({
       ...req.body,
-      info: JSON.parse(req.body.info),
+      info: req.body.info? JSON.parse(req.body.info): {},
       images
     });
     const result = await product.save();
