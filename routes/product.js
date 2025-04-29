@@ -17,7 +17,7 @@ router.post("/", dynamicImageUpload, create);
 router.post("/purchase", purchase);
 router.post("/bid", bid)
 router.post("/sell", sell)
-router.put("/:id", update);
+router.put("/:id", dynamicImageUpload, update);
 router.delete("/:id", remove);
 
 module.exports = router;
