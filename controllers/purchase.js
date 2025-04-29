@@ -3,6 +3,11 @@ const Product = require("../models/product");
 const stripe = require("stripe")(
   "sk_test_51Qz6p2JIXPaahj1jaRih1JczdYwE19Ox6CrGlnjra4O6QM6olV6r2rXcHNsMb4kWE8D92bUVusErhizktkfxkRjF005k7AEKeh"
 );
+const handlebars = require("handlebars")
+const puppeteer = require("puppeteer");
+const fs = require("fs").promises;
+const path = require('path');
+
 
 exports.purchase = async (req, res) => {
   try {
@@ -12,11 +17,11 @@ exports.purchase = async (req, res) => {
       return res.status(400).send({ message: "No products provided" });
     }
 
-    const products = await Product.find({ _id: { $in: order.map(prod=>prod.id) } });
+    const products = await Product.find({ _id: { $in: order.map(prod => prod.id) } });
 
-    for(let product of products) {
-      if(product.auction){
-        return res.status(403).json("Products for auction are not for sale")
+    for (let product of products) {
+      if (product.auction) {
+        return res.status(403).json("Products for auction are not for sale");
       }
     }
 
@@ -28,16 +33,15 @@ exports.purchase = async (req, res) => {
 
     let totalAmountInCents = 0;
     for (const product of products) {
-      if (product.quantity === 0) {
+      const orderItem = order.find((elem) => elem.id == product._id);
+      if (product.quantity < orderItem.quantity) {
         return res
           .status(400)
-          .send({ message: `${product.name || product._id} is out of stock` });
+          .send({ message: `${product.name || product._id} is out of stock or insufficient quantity` });
       }
-      // console.log(product._id)
-      // console.log("product:", order.find((elem)=> elem.id==product._id));
-      totalAmountInCents += Math.round(product.price * 100*order.find((elem)=> elem.id==product._id).quantity); // Sum prices in cents
+      totalAmountInCents += Math.round(product.price * 100 * orderItem.quantity); // Sum prices in cents
     }
-    console.log("total:", totalAmountInCents);
+
     const testPaymentMethod = "pm_card_visa";
 
     const paymentIntent = await stripe.paymentIntents.create({
@@ -51,14 +55,33 @@ exports.purchase = async (req, res) => {
 
     if (paymentIntent.status === "succeeded") {
       for (const product of products) {
-        product.quantity -= 1;
+        const orderItem = order.find((elem) => elem.id == product._id);
+        product.quantity -= orderItem.quantity;
         await product.save();
       }
-      Order.create({
+
+      const newOrder = await Order.create({
         products: products.map((p) => p._id),
         totalPrice: totalAmountInCents / 100,
         date: new Date(),
-      })
+      });
+
+      // Generate bill PDF and save to uploads directory
+      const bill = await generateBill(order);
+      const uploadsDir = path.join(__dirname, '../uploads');
+      
+      // Ensure uploads directory exists
+      await fs.mkdir(uploadsDir, { recursive: true });
+      
+      const fileName = `bill_${newOrder._id}_${Date.now()}.pdf`;
+      const filePath = path.join(uploadsDir, fileName);
+      
+      await fs.writeFile(filePath, bill.buffer);
+
+      // Construct URL for the bill
+      const billUrl = `${fileName}`;
+
+      // Send JSON response with purchase details and bill URL
       res.send({
         message: "Purchase successful",
         paymentIntentId: paymentIntent.id,
@@ -67,9 +90,9 @@ exports.purchase = async (req, res) => {
           name: p.name || p.title,
           price: p.price,
         })),
+        billUrl: billUrl
       });
     } else {
-      console.log()
       res
         .status(400)
         .send({ message: "Payment failed", status: paymentIntent.status });
@@ -150,5 +173,150 @@ exports.sell = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(400).send({ message: "Sale failed", error: err.message });
+  }
+}
+
+async function generateBill(order) {
+  try {
+    // Validate order input
+    if (!Array.isArray(order) || order.length === 0) {
+      throw new Error('Invalid order: No products provided');
+    }
+
+    // Fetch products from database
+    const productIds = order.map(item => item.id);
+    const products = await Product.find({ _id: { $in: productIds } });
+
+    if (products.length !== order.length) {
+      throw new Error('One or more products not found');
+    }
+
+    // Prepare bill data
+    const billItems = products.map(product => {
+      const orderItem = order.find(item => item.id === product._id.toString());
+      return {
+        name: product.name || product.title,
+        quantity: orderItem.quantity,
+        price: product.price,
+        total: (product.price * orderItem.quantity).toFixed(2)
+      };
+    });
+
+    const totalAmount = billItems
+      .reduce((sum, item) => sum + parseFloat(item.total), 0)
+      .toFixed(2);
+
+    // Define Handlebars template
+    const templateSource = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; }
+          .bill-container { max-width: 800px; margin: 0 auto; }
+          .header { text-align: center; margin-bottom: 30px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f2f2f2; }
+          .total { font-weight: bold; text-align: right; }
+          .footer { text-align: center; margin-top: 30px; }
+        </style>
+      </head>
+      <body>
+        <div class="bill-container">
+          <div class="header">
+            <h1>Purchase Bill</h1>
+            <p>Date: {{date}}</p>
+          </div>
+          
+          <table>
+            <tr>
+              <th>Product</th>
+              <th>Quantity</th>
+              <th>Price ($)</th>
+              <th>Total ($)</th>
+            </tr>
+            {{#each items}}
+            <tr>
+              <td>{{name}}</td>
+              <td>{{quantity}}</td>
+              <td>{{price}}</td>
+              <td>{{total}}</td>
+            </tr>
+            {{/each}}
+          </table>
+
+          <p class="total">Total Amount: {{total}}</p>
+
+          <div class="footer">
+            <p>Thank you for your purchase!</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Compile template with Handlebars
+    const template = handlebars.compile(templateSource);
+    const html = template({
+      items: billItems,
+      total: totalAmount,
+      date: new Date().toLocaleDateString()
+    });
+
+    // Launch Puppeteer
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    const page = await browser.newPage();
+
+    // Set HTML content
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+
+    // Generate PDF
+    const pdfPath = path.join(__dirname, `bill_${Date.now()}.pdf`);
+    await page.pdf({
+      path: pdfPath,
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '20mm',
+        right: '20mm',
+        bottom: '20mm',
+        left: '20mm'
+      }
+    });
+
+    // Close browser
+    await browser.close();
+
+    // Read PDF as buffer
+    const pdfBuffer = await fs.readFile(pdfPath);
+
+    // Clean up: remove the generated PDF file
+    await fs.unlink(pdfPath);
+
+    return {
+      buffer: pdfBuffer,
+      filename: `bill_${Date.now()}.pdf`,
+      mimeType: 'application/pdf'
+    };
+
+  } catch (error) {
+    console.error('Error generating bill:', error);
+    throw new Error(`Failed to generate bill: ${error.message}`);
+  }
+}
+
+exports.downloadBill = async (req, res) => {
+  try {
+    const {filename} = req.params;
+    // const filePath = path.join(__dirname, '../uploads', filename);
+    res.setHeader(`Content-Disposition`, `attachment; filename="${filename}"`);
+    return res.sendFile(filename, { root: "uploads" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 }

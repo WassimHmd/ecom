@@ -35,6 +35,14 @@ const productSchema = new mongoose.Schema({
     type: Object,
     default: {},
   },
+  rating: {
+    type: Number,
+    default: 0,
+  },
+  ratings: {
+    type: Number,
+    default: 0,
+  }
 });
 
 const Product = mongoose.model("product", productSchema);

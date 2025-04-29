@@ -80,3 +80,24 @@ exports.list = async (req, res) => {
     res.status(400).send(err);
   }
 };
+
+exports.addRating = async (req, res) => {
+  try {
+    const { productId, rating } = req.body;
+    const product = await Product.findById(productId);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    product.rating = (product.rating * product.ratings + rating) / (product.ratings + 1);
+    product.ratings += 1;
+    await product.save();
+
+    res.status(200).json({ message: "Rating added successfully" });
+
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
