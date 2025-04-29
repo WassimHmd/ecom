@@ -1,5 +1,9 @@
 const Product = require("../models/product");
 
+const arrayify = (_) => {
+  return _ ? Array.isArray(_) ? _ : [_]: [];
+}
+
 // CREATE
 exports.create = async (req, res) => {
   try {
@@ -40,7 +44,11 @@ exports.read = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const id = req.params.id;
-    const product = await Product.findByIdAndUpdate(id, req.body, {
+  const images = [...arrayify(req.body.image), ...arrayify(req.images.image.map(elem=> "http://localhost:5000" + elem.path))];
+
+    console.log(req.body)
+    console.log(images)
+    const product = await Product.findByIdAndUpdate(id, {...req.body,info: JSON.parse(req.body.info),  images}, {
       new: true,
     });
     if (!product) {
@@ -58,7 +66,7 @@ exports.update = async (req, res) => {
 exports.remove = async (req, res) => {
   try {
     const id = req.params.id;
-    const product = await Product.findByIdAndRemove(id);
+    const product = await Product.findByIdAndDelete(id);
     if (!product) {
       res.status(404).send({ message: "Product not found" });
     } else {
