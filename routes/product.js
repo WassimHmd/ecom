@@ -8,11 +8,12 @@ const {
   update,
   remove,
 } = require("../controllers/products");
-const { purchase, bid, sell } = require("../controllers/purchase");
+const { purchase, bid, sell, downloadBill } = require("../controllers/purchase");
 const { dynamicImageUpload } = require("../middlewares/imageUpload");
 
 router.get("/", list);
 router.get("/:id", read);
+router.get("/bill/:filename", downloadBill)
 router.post("/", dynamicImageUpload, create);
 router.post("/purchase", purchase);
 router.post("/bid", bid)
