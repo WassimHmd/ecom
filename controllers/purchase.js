@@ -139,7 +139,7 @@ exports.sell = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    if (!product.auction || !product.bidPlaced) {
+    if (!product.auction || !product.bids>0) {
       return res.status(400).json({ message: "Product is not for auction or no bid has been placed" });
     }
 
@@ -156,7 +156,7 @@ exports.sell = async (req, res) => {
     });
 
     if (paymentIntent.status === "succeeded") {
-      product.quantity -= 1;
+      product.quantity = 0;
       await product.save();
 
       res.send({
