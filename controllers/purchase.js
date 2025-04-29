@@ -1,3 +1,4 @@
+const Discount = require("../models/discount");
 const Order = require("../models/order");
 const Product = require("../models/product");
 const stripe = require("stripe")(
@@ -148,5 +149,20 @@ exports.sell = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(400).send({ message: "Sale failed", error: err.message });
+  }
+}
+
+exports.createDiscount = async (req, res) => {
+  try {
+    const {code, percentage} = req.body;
+    const discount = new Discount({
+      code,
+      percentage
+    })
+
+    return res.status(200).json(discount)
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json("Error")
   }
 }
