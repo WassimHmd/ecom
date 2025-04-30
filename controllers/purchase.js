@@ -294,8 +294,9 @@ async function generateBill(order, discountCode = null) {
     // Set HTML content
     await page.setContent(html, { waitUntil: 'networkidle0' });
 
+    const name = `bill_${Date.now()}.pdf`
     // Generate PDF
-    const pdfPath = path.join(__dirname, `bill_${Date.now()}.pdf`);
+    const pdfPath = path.join(__dirname, `../uploads/${name}`);
     await page.pdf({
       path: pdfPath,
       format: 'A4',
@@ -314,12 +315,11 @@ async function generateBill(order, discountCode = null) {
     // Read PDF as buffer
     const pdfBuffer = await fs.readFile(pdfPath);
 
-    // Clean up: remove the generated PDF file
-    await fs.unlink(pdfPath);
+    
 
     return {
       buffer: pdfBuffer,
-      filename: `bill_${Date.now()}.pdf`,
+      filename: name,
       mimeType: 'application/pdf'
     };
 
