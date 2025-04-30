@@ -35,6 +35,10 @@ const productSchema = new mongoose.Schema({
     type: Object,
     default: {},
   },
+  bidderPhone: {
+    type: String,
+    default: ""
+  }
 });
 
 const Product = mongoose.model("product", productSchema);

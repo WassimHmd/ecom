@@ -108,7 +108,8 @@ exports.purchase = async (req, res) => {
 
 exports.bid = async (req, res) => {
   try {
-    const { productId, price } = req.body;
+    const { productId, price, bidderPhone } = req.body;
+    console.log(bidderPhone)
     const product = await Product.findById(productId);
 
     if (!product) {
@@ -121,7 +122,8 @@ exports.bid = async (req, res) => {
 
     product.price = price
     product.bids = product.bids + 1
-    product.save()
+    product.bidderPhone = bidderPhone
+    await product.save()
     return res.status(200).json({ message: "Bid placed successfully" });
 
   } catch (error) {
