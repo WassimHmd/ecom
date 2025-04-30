@@ -44,11 +44,11 @@ exports.read = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const id = req.params.id;
-  const images = [...arrayify(req.body.image), ...arrayify(req.images.image.map(elem=> "http://localhost:5000" + elem.path))];
+  const images = [...arrayify(req.body.image), ...arrayify(req.images.image?.map(elem=> "http://localhost:5000" + elem.path))];
 
     console.log(req.body)
     console.log(images)
-    const product = await Product.findByIdAndUpdate(id, {...req.body,info: JSON.parse(req.body.info),  images}, {
+    const product = await Product.findByIdAndUpdate(id, {...req.body,info: req.body.info ? JSON.parse(req.body.info) : {},  images}, {
       new: true,
     });
     if (!product) {
