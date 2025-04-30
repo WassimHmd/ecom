@@ -35,6 +35,7 @@ const productSchema = new mongoose.Schema({
     type: Object,
     default: {},
   },
+
   rating: {
     type: Number,
     default: 0,
@@ -42,6 +43,11 @@ const productSchema = new mongoose.Schema({
   ratings: {
     type: Number,
     default: 0,
+  },
+  bidderPhone: {
+    type: String,
+    default: ""
+
   }
 });
 
